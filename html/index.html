@@ -1,0 +1,250 @@
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <meta charset="utf-8" />
+    <title>Floven</title>
+    <script src="https://cdn.plot.ly/plotly-2.6.3.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Roboto", sans-serif;
+      }
+      tbody tr:nth-child(even) input {
+        background-color: #202b38;
+      }
+    </style>
+  </head>
+  <body style="max-width: 90%">
+    <div class="navbar" style="display: flex; justify-content: space-between;"><h2>Floven </h2> <h3 id="state">OFF</h3>      <h4 id="tempDisplay" style="display: inline-block">0°C</h4>
+    </div>
+    <div style="display: flex; justify-content: space-between;">
+
+
+          <div  >
+              <!-- Set solder profile in table-->
+              <table>
+                  <tr>
+                      <th>Solder Profile</th>
+                      <th>Temp</th>
+                      <th>Time</th>
+                  </tr>
+                  <tr>
+                      <td>Preheat</td>
+                      <td><input class="reflowInput" type="number" id="preheatTemp" value="150" min="0" max="500" step="1"></td>
+                      <td><input class="reflowInput" type="number" id="preheatTime" value="90" min="0" max="500" step="1"></td>
+                  </tr>
+                  <tr>
+                      <td>Soak</td>
+                      <td><input class="reflowInput" type="number" id="soakTemp" value="200" min="0" max="500" step="1"></td>
+                      <td><input class="reflowInput" type="number" id="soakTime" value="180" min="0" max="500" step="1"></td>
+                  </tr>
+                  <tr>
+                      <td>Reflow Ramp</td>
+                      <td><input class="reflowInput" type="number" id="reflowTemp" value="260" min="0" max="500" step="1"></td>
+                      <td><input class="reflowInput" type="number" id="reflowTime" value="90" min="0" max="500" step="1"></td>
+                  </tr>
+                  <tr>
+                    <td>Reflow Hold</td>
+                    <td><input class="reflowInput" type="number" id="reflowHoldTemp" value="260" min="0" max="500" step="1"></td>
+                    <td><input class="reflowInput" type="number" id="reflowHoldTime" value="50" min="0" max="500" step="1"></td>
+                </tr>
+                  <tr>
+                      <td>Cool</td>
+                      <td><input class="reflowInput" type="number" id="coolTemp" value="70" min="0" max="500" step="1"></td>
+                      <td><input class="reflowInput" type="number" id="coolTime" value="90" min="0" max="500" step="1"></td>
+                  </tr>
+              </table>
+              <!-- Slider for tuning PID -->
+              <div style="display: flex; justify-content: center;">
+                  <div style="width: 50%;">
+                      <h3>Proportional</h3>
+                      <input type="range" min="0" max="100" value="50" class="slider" id="proportional">
+                  </div>
+                  <div style="width: 50%;">
+                      <h3>Integral</h3>
+                      <input type="range" min="0" max="100" value="50" class="slider" id="integral">
+                  </div>
+              </div>
+              
+
+              </div>
+
+          <div>   
+         <div id="myDiv" style=""></div>
+         </div>
+
+
+    </div>
+
+    <!-- Reflow Controls-->
+    <div class="navbar">
+      <!-- <button id="preheat" onclick="preheat()">Preheat</button> -->
+      <button id="startReflow" onclick="startReflow()">Start Reflow</button>
+      <button id="stopReflow" onclick="stopReflow()">Stop Reflow</button>
+
+    </div>
+
+    <!-- Plot Solder Profile using Plotly-->
+    
+        <script>
+          var reflowState = false;
+          var xgen = [];
+          var ygen = [];
+          var xreflow = [];
+          var yreflow = [];
+          var firstTemp = 70;
+
+            function generateData(){
+              var preheatTemp = parseInt(document.getElementById("preheatTemp").value);
+              var preheatTime = parseInt(document.getElementById("preheatTime").value);
+              var soakTemp = parseInt(document.getElementById("soakTemp").value);
+              var soakTime = parseInt(document.getElementById("soakTime").value);
+              var reflowTemp = parseInt(document.getElementById("reflowTemp").value);
+              var reflowTime = parseInt(document.getElementById("reflowTime").value);
+              var reflowHoldTemp = parseInt(document.getElementById("reflowHoldTemp").value);
+              var reflowHoldTime = parseInt(document.getElementById("reflowHoldTime").value);
+              var coolTemp = parseInt(document.getElementById("coolTemp").value);
+              var coolTime = parseInt(document.getElementById("coolTime").value);
+              //var xgen = [0, preheatTime, preheatTime + soakTime, preheatTime + soakTime + reflowTime, preheatTime + soakTime + reflowTime + coolTime]
+              //var ygen =  [70, preheatTemp, soakTemp, reflowTemp, coolTemp]
+              var xgen = [0, preheatTime, preheatTime + soakTime, preheatTime + soakTime + reflowTime, preheatTime + soakTime + reflowTime + reflowHoldTime, preheatTime + soakTime + reflowTime + reflowHoldTime + coolTime]
+              var ygen =  [firstTemp, preheatTemp, soakTemp, reflowTemp, reflowHoldTemp, coolTemp]
+
+              return {xgen,ygen}
+            }
+            ({xgen, ygen} = generateData());
+            
+            var trace1 = {
+            x: xgen,
+            y: ygen,
+            mode: "lines",
+            name: "Solder Profile",
+            line: {
+                color: "rgb(55, 128, 191)",
+                width: 3
+            },
+            marker: {         // marker is an object, valid marker keys: #scatter-marker
+                color: 'rgb(16, 32, 77)' // more about "marker.color": #scatter-marker-color
+            }
+
+            };
+
+    
+            var layout = {
+            title: "Solder Profile",
+            paper_bgcolor: '#161f27',
+          plot_bgcolor: '#161f27',
+          font: {
+        color: '#dbdbdb',
+      },
+            xaxis: {
+                title: "Time (s)",
+                showgrid: false,
+                zeroline: false
+            },
+            yaxis: {
+                title: "Temperature (C)",
+                showline: false
+            }
+            };
+
+            var trace2 = {
+            x: xreflow,
+            y: yreflow,
+            mode: "lines",
+            name: "Reflow",
+            line: {
+                color: "rgb(219, 64, 82)",
+                width: 3
+            }
+            };
+             data = [trace1, trace2];
+            
+            drawGraph();
+            
+           var elements = document.getElementsByClassName("reflowInput")
+           console.log(elements)
+            Object.entries(elements).forEach(function(element) {
+
+              element[1].addEventListener("change", function() {
+                ({xgen, ygen} = generateData());
+               console.log("triggered")
+        
+                drawGraph()
+              });
+            });
+
+            function drawGraph(){
+              trace1.x = xgen;
+              trace1.y = ygen;
+              trace2.x = xreflow;
+              trace2.y = yreflow;
+              Plotly.newPlot("myDiv", data, layout);
+              // console.log(data)
+            }
+
+
+
+            var start = new Date();
+            function startReflow(){
+              //start timer and set reflowState to true
+              reflowState = true;
+              document.getElementById("state").innerHTML = "Reflowing";
+              console.log("Reflow Started")
+              start = new Date();
+
+              //tell microcontroller to start reflow + send profile
+
+            }
+
+
+
+
+        </script>
+
+
+<!-- Simulate Reflow Temperature input -->
+    <script>
+      var tempInterval = setInterval(function(){
+        if(reflowState){
+          var time = new Date() - start;
+          var time = time/1000;
+          var temp = 0;
+          for(var i = 0; i < xgen.length; i++){
+            if(time < xgen[i]){
+              m = ((ygen[i] - ygen[i-1])/(xgen[i] - xgen[i-1]))
+              temp =  m * (time)  + (ygen[i] - (m * xgen[i])); //Very useful to know where we should be for control of the oven
+              // add random noise to temp
+              temp = temp + Math.random()*15 - 7.5;
+              break;
+            }
+          }
+          xreflow.push(time);
+          yreflow.push(temp);
+          document.getElementById("tempDisplay").innerHTML = temp.toFixed(2)  + "°C";
+         
+              drawGraph();
+        }
+        else
+        {
+          firstTemp = 70 + Math.random()*5 - 2.5;
+          document.getElementById("tempDisplay").innerHTML = firstTemp.toFixed(2) + "°C";
+          ygen[0] = firstTemp;
+          drawGraph();
+        } 
+      }, 1000);
+    </script>
+
+    </body>
+    </html>
+
+  </body>
+</html>
