@@ -28,7 +28,7 @@
     <div style="display: flex; justify-content: space-between;">
 
 
-          <div  >
+          <div>
               <!-- Set solder profile in table-->
               <table>
                   <tr>
@@ -78,7 +78,7 @@
               </div>
 
           <div>   
-         <div id="myDiv" style=""></div>
+         <div id="myDiv"></div>
          </div>
 
 
@@ -89,6 +89,9 @@
       <!-- <button id="preheat" onclick="preheat()">Preheat</button> -->
       <button id="startReflow" onclick="startReflow()">Start Reflow</button>
       <button id="stopReflow" onclick="stopReflow()">Stop Reflow</button>
+      <!-- on and off using /on and /off-->
+      <button id="on" onclick="on()">On</button>
+      <button id="off" onclick="off()">Off</button>
 
     </div>
 
@@ -241,6 +244,18 @@
           drawGraph();
         } 
       }, 1000);
+
+      function on(){
+        //turn on oven
+        console.log("Oven On")
+        fetch("/on")
+      }
+
+      function off(){
+        //turn off oven
+        console.log("Oven Off")
+        fetch("/off")
+      }
     </script>
 
     </body>
